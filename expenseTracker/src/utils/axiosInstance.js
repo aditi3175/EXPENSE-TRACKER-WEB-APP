@@ -1,14 +1,21 @@
-import axios from 'axios';
-const isDevelopment =
-  import.meta.env.MODE === "development" ||
-  window.location.hostname === "localhost";
+// import axios from 'axios';
 
-const API_URL =
-  import.meta.env.PROD === "production"
-    ? "https://expense-tracker-web-app-nott.onrender.com/api/v1"
-    : "http://localhost:8080/api/v1";
-    console.log("Current environment:", import.meta.env.MODE);
-    console.log("API URL:", API_URL);
+// Since your backend serves both frontend and API from same URL
+const isProduction = window.location.hostname.includes('onrender.com') || 
+                    window.location.hostname.includes('netlify.app') ||
+                    window.location.hostname.includes('vercel.app') ||
+                    !window.location.hostname.includes('localhost');
+
+// Use SAME domain for API calls since backend and frontend are on same service
+const API_URL = isProduction
+  ? `${window.location.origin}/api/v1`  // Same domain as frontend!
+  : "http://localhost:8080/api/v1";
+
+console.log('🌐 Environment Detection:');
+console.log('- Hostname:', window.location.hostname);
+console.log('- Origin:', window.location.origin);
+console.log('- Is Production:', isProduction);
+console.log('- API URL:', API_URL);
 
 const axiosInstance = axios.create({
   baseURL: API_URL,

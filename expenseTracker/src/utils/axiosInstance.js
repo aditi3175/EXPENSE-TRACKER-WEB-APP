@@ -1,9 +1,11 @@
 import axios from 'axios';
 
 const API_URL =
-  import.meta.env.MODE === "production"
-    ? "https://expense-tracker-web-app-xwrl.onrender.com"
+  import.meta.env.PROD === "production"
+    ? "https://expense-tracker-web-app-xwrl.onrender.com/api/v1"
     : "http://localhost:8080/api/v1";
+    console.log("Current environment:", import.meta.env.MODE);
+    console.log("API URL:", API_URL);
 
 const axiosInstance = axios.create({
   baseURL: API_URL,

@@ -5,7 +5,7 @@ const isDevelopment =
 
 const API_URL =
   import.meta.env.PROD === "production"
-    ? "https://expense-tracker-web-app-xwrl.onrender.com/api/v1"
+    ? "https://expense-tracker-web-app-nott.onrender.com/api/v1"
     : "http://localhost:8080/api/v1";
     console.log("Current environment:", import.meta.env.MODE);
     console.log("API URL:", API_URL);

@@ -14,7 +14,7 @@ import {
 import UserRouter from "./routers/user.routers.js";
 import ExpenseRouter from "./routers/expenses.routers.js";
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { dirname, join} from "path";
 
 dotenv.config();
 
@@ -83,15 +83,6 @@ app.use((req, res, next) => {
 // ---------------- Error Handling ----------------
 app.use(notFound);
 app.use(errorHandler);
-
-// ---------------- Optional Root Route ----------------
-app.get("/", (req, res) => {
-  res.json({
-    message: "Expense Tracker API is running!",
-    version: "1.0.0",
-    docs: "/api/v1/docs",
-  });
-});
 
 // ---------------- Start Server ----------------
 const PORT = process.env.PORT || 8080;

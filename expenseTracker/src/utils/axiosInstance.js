@@ -1,4 +1,7 @@
 import axios from 'axios';
+const isDevelopment =
+  import.meta.env.MODE === "development" ||
+  window.location.hostname === "localhost";
 
 const API_URL =
   import.meta.env.PROD === "production"

@@ -17,7 +17,8 @@
   },
   "scripts": {
     "start": "node expenseTrackerBackend/server.js",
-    "dev": "nodemon expenseTrackerBackend/server.js"
+    "dev": "nodemon expenseTrackerBackend/server.js",
+    "build": "cd expenseTracker && npm install && npm run build"
   },
   "type": "module"
 }

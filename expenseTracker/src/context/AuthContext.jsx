@@ -44,7 +44,7 @@ const initialState = {
   isAuthenticated: false,
   user: null,
   token: null,
-  loading: true, // Start with loading true to check localStorage
+  loading: true, 
   error: null,
 };
 

@@ -11,34 +11,36 @@ import {
   notFound,
   errorHandler,
 } from "./middlewares/errorHandler.middlewares.js";
+import UserRouter from "./routers/user.routers.js";
+import ExpenseRouter from "./routers/expenses.routers.js";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 
 dotenv.config();
 
+// ---------------- Create Express App ----------------
 const app = express();
 
-// Security middleware
+// ---------------- Security & Middleware ----------------
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
 
-
 app.use(generalLimiter);
 
-// CORS configuration - Allow all origins in development
 const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
       ? process.env.CORS_ORIGIN || "https://yourdomain.com"
-      : true, // Allow ANY origin in development
+      : true,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
-
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -51,7 +53,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check
+// ---------------- Health Check ----------------
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
@@ -60,13 +62,28 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Routes
-import UserRouter from "./routers/user.routers.js";
-import ExpenseRouter from "./routers/expenses.routers.js";
-
+// ---------------- API Routes ----------------
 app.use("/api/v1/users", authLimiter, UserRouter);
 app.use("/api/v1/expenses", ExpenseRouter);
 
+// ---------------- Serve React Frontend ----------------
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Serve static files from frontend build
+app.use(express.static(join(__dirname, "dist")));
+
+// Fallback to index.html for non-API requests
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) return next(); // skip API routes
+  res.sendFile(join(__dirname, "dist", "index.html"));
+});
+
+// ---------------- Error Handling ----------------
+app.use(notFound);
+app.use(errorHandler);
+
+// ---------------- Optional Root Route ----------------
 app.get("/", (req, res) => {
   res.json({
     message: "Expense Tracker API is running!",
@@ -75,22 +92,13 @@ app.get("/", (req, res) => {
   });
 });
 
-// Error handling middleware
-app.use(notFound);
-app.use(errorHandler);
-
+// ---------------- Start Server ----------------
 const PORT = process.env.PORT || 8080;
 
 connectDB()
   .then(() => {
-    app.on("error", (error) => {
-      console.error("App ERROR:", error);
-      throw error;
-    });
-
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
-      console.log(`Access at: http://localhost:${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(
         `CORS: ${

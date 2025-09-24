@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useExpenses } from '../context/ExpensesContext';
 import axiosInstance from '../utils/axiosInstance';
 
 const ExpenseForm = ({ expense, onSave, onCancel }) => {
@@ -9,6 +10,7 @@ const ExpenseForm = ({ expense, onSave, onCancel }) => {
     date: new Date().toISOString().split('T')[0],
     notes: '',
   });
+  const { addExpense, getExpenses } = useExpenses();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -54,9 +56,9 @@ const ExpenseForm = ({ expense, onSave, onCancel }) => {
       if (expense) {
         // Update existing expense
         await axiosInstance.put(`/expenses/${expense._id}`, expenseData);
+        getExpenses(); // refresh context after edit
       } else {
-        // Create new expense
-        await axiosInstance.post('/expenses', expenseData);
+        await addExpense(expenseData); // updates context immediately
       }
 
       onSave();

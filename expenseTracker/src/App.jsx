@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ExpensesProvider } from './context/ExpensesContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
@@ -44,11 +45,13 @@ const AppRoutes = () => {
 function App() {
   return (
     <AuthProvider>
+    <ExpensesProvider>
       <Router>
         <div className="App">
           <AppRoutes />
         </div>
-      </Router>
+        </Router>
+    </ExpensesProvider>
     </AuthProvider>
   );
 }

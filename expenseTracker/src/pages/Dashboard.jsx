@@ -5,29 +5,13 @@ import BudgetCard from '../components/BudgetCard';
 import ExpenseForm from '../components/ExpenseForm';
 import ExpenseList from '../components/ExpenseList';
 import Charts from '../components/Charts';
+import { useExpenses } from "../context/ExpensesContext";
+
 
 const Dashboard = () => {
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { expenses, loading, refreshExpenses } = useExpenses();
   const [showForm, setShowForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  const fetchExpenses = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get('/expenses');
-      setExpenses(response.data);
-    } catch (error) {
-      console.error('Failed to fetch expenses:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchExpenses();
-  }, [refreshTrigger]);
 
   const handleAddExpense = () => {
     setEditingExpense(null);
@@ -42,7 +26,7 @@ const Dashboard = () => {
   const handleFormSave = () => {
     setShowForm(false);
     setEditingExpense(null);
-    setRefreshTrigger(prev => prev + 1);
+    refreshExpenses();
   };
 
   const handleFormCancel = () => {
@@ -112,8 +96,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Budget and Form */}
           <div className="lg:col-span-1 space-y-4 sm:space-y-6 order-2 lg:order-1">
-            <BudgetCard expenses={expenses} refreshTrigger={refreshTrigger} />
-            
+            <BudgetCard expenses={expenses} />
             {showForm && (
               <ExpenseForm
                 expense={editingExpense}
@@ -126,10 +109,7 @@ const Dashboard = () => {
           {/* Right Column - Expenses and Charts */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6 order-1 lg:order-2">
             <ExpenseList
-              onEdit={handleEditExpense}
-              refreshTrigger={refreshTrigger}
-            />
-            
+              onEdit={handleEditExpense} />
             <Charts expenses={expenses} />
           </div>
         </div>

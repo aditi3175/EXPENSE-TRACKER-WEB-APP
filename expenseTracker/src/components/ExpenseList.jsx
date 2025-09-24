@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
+import { useExpenses } from "../context/ExpensesContext";
 import axiosInstance from "../utils/axiosInstance";
 
-const ExpenseList = ({ onEdit, refreshTrigger }) => {
-  const [expenses, setExpenses] = useState([]);
-  const [loading, setLoading] = useState(true);
+const ExpenseList = ({ onEdit }) => {
+  const { expenses, deleteExpense } = useExpenses();
   const [error, setError] = useState("");
   const [currency, setCurrency] = useState(
     localStorage.getItem("userCurrency") || "INR"
@@ -20,22 +20,6 @@ const ExpenseList = ({ onEdit, refreshTrigger }) => {
     "Other",
   ];
 
-  const fetchExpenses = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosInstance.get("/expenses");
-      setExpenses(response.data);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch expenses");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchExpenses();
-  }, [refreshTrigger]);
-
   // Listen for currency change events
   useEffect(() => {
     const handleCurrencyChange = () => {
@@ -51,12 +35,7 @@ const ExpenseList = ({ onEdit, refreshTrigger }) => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this expense?")) {
-      try {
-        await axiosInstance.delete(`/expenses/${id}`);
-        fetchExpenses();
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to delete expense");
-      }
+      deleteExpense(id);
     }
   };
 
@@ -66,8 +45,11 @@ const ExpenseList = ({ onEdit, refreshTrigger }) => {
       filter.category === "All" ||
       expense.category === filter.category;
     const matchesSearch =
-      expense.title.toLowerCase().includes(filter.search.toLowerCase()) ||
-      expense.notes.toLowerCase().includes(filter.search.toLowerCase());
+      (expense.title || "")
+        .toLowerCase()
+        .includes(filter.search.toLowerCase()) ||
+      (expense.notes || "").toLowerCase().includes(filter.search.toLowerCase());
+
     return matchesCategory && matchesSearch;
   });
 
@@ -97,16 +79,6 @@ const ExpenseList = ({ onEdit, refreshTrigger }) => {
     };
     return colors[category] || colors.Other;
   };
-
-  if (loading) {
-    return (
-      <div className="card">
-        <div className="flex justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8 border-2 border-green-100">

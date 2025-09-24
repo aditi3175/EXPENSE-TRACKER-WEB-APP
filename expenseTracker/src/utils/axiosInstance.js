@@ -9,7 +9,7 @@ const isProduction =
 
 // Use SAME domain for API calls since backend and frontend are on same service
 const API_URL = isProduction
-  ? `${window.location.origin}/api/v1` // Same domain as frontend!
+  ? `${window.location.origin}/api/v1` 
   : "http://localhost:8080/api/v1";
 
 console.log("🌐 Environment Detection:");

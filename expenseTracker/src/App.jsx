@@ -45,13 +45,13 @@ const AppRoutes = () => {
 function App() {
   return (
     <AuthProvider>
-    <ExpensesProvider>
-      <Router>
-        <div className="App">
-          <AppRoutes />
-        </div>
+      <ExpensesProvider>
+        <Router>
+          <div className="App">            
+            <AppRoutes />            
+          </div>       
         </Router>
-    </ExpensesProvider>
+      </ExpensesProvider>
     </AuthProvider>
   );
 }

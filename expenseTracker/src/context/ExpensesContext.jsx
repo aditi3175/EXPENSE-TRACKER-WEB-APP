@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
 import axiosInstance from "../utils/axiosInstance";
+import { useAuth } from "./AuthContext";
 
 const ExpensesContext = createContext();
 
@@ -31,14 +32,17 @@ const initialState = {
 
 export const ExpensesProvider = ({ children }) => {
   const [state, dispatch] = useReducer(expensesReducer, initialState);
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
   // Fetch all expenses
   const getExpenses = async () => {
+    if (state.loading || !isAuthenticated) return;
     dispatch({ type: "LOADING" });
     try {
       const res = await axiosInstance.get("/expenses");
       dispatch({ type: "SET_EXPENSES", payload: res.data });
     } catch (err) {
+      console.error("Failed to fetch expenses:", err.response || err);
       dispatch({
         type: "ERROR",
         payload: err.response?.data?.message || "Failed to fetch expenses",
@@ -66,9 +70,15 @@ export const ExpensesProvider = ({ children }) => {
     }
   };
 
+  // useEffect(() => {
+  //   getExpenses();
+  // }, []);
+
   useEffect(() => {
-    getExpenses();
-  }, []);
+    if (!authLoading && isAuthenticated) {
+      getExpenses();
+    }
+  }, [authLoading, isAuthenticated]);
 
   return (
     <ExpensesContext.Provider

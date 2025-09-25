@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import session from "express-session";
 import connectDB from "./DB/db.js";
 import {
   generalLimiter,
@@ -38,6 +39,17 @@ app.use(
           "https://expense-tracker-web-app-1.onrender.com",
         ],
       },
+    },
+  })
+);
+
+app.use(
+  session({
+    secret: process.env.JWT_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      secure: process.env.NODE_ENV === "production"
     },
   })
 );

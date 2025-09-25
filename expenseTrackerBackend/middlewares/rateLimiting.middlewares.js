@@ -4,7 +4,7 @@ import rateLimit from "express-rate-limit";
 const keyGenerator = (req, res) => {
   if (req.user?.id) return `user-${req.user.id}`;
   if (req.sessionID) return `session-${req.sessionID}`;
-  return req.ip;
+  return `ip-${req.ip}`;
 };
 
 // General API rate limit

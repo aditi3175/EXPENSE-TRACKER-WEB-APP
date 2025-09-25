@@ -4,12 +4,13 @@ import express from "express";
 import helmet from "helmet";
 import session from "express-session";
 import connectDB from "./DB/db.js";
-import {
-  generalLimiter,
-  authLimiter,
-  expenseLimiter,
-  productionLimiter,
-} from "./middlewares/rateLimiting.middlewares.js";
+// TEMPORARILY COMMENTED OUT RATE LIMITING
+// import {
+//   generalLimiter,
+//   authLimiter,
+//   expenseLimiter,
+//   productionLimiter,
+// } from "./middlewares/rateLimiting.middlewares.js";
 import {
   notFound,
   errorHandler,
@@ -25,7 +26,7 @@ dotenv.config();
 // ---------------- Create Express App ----------------
 const app = express();
 
-// ---------------- Trust Proxy (Important for Render) ----------------
+// ---------------- Trust Proxy (Essential for Render) ----------------
 app.set("trust proxy", 1);
 
 // ---------------- Security & Middleware ----------------
@@ -58,13 +59,8 @@ app.use(
   })
 );
 
-// Use more lenient rate limiting based on environment
-const isProduction = process.env.NODE_ENV === "production";
-if (isProduction) {
-  app.use(productionLimiter); // Use very lenient limiter in production
-} else {
-  app.use(generalLimiter);
-}
+// RATE LIMITING COMPLETELY DISABLED FOR NOW
+console.log("⚠️  Rate limiting is DISABLED for debugging");
 
 const corsOptions = {
   origin:
@@ -82,7 +78,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Debug middleware - only in development
-if (!isProduction) {
+if (process.env.NODE_ENV !== "production") {
   app.use((req, res, next) => {
     console.log(`${req.method} ${req.originalUrl}`);
     if (req.body && Object.keys(req.body).length > 0) {
@@ -92,24 +88,33 @@ if (!isProduction) {
   });
 }
 
+// Add IP logging middleware to debug proxy issues
+app.use((req, res, next) => {
+  console.log(
+    `Client IP: ${req.ip}, X-Forwarded-For: ${req.get(
+      "X-Forwarded-For"
+    )}, X-Real-IP: ${req.get("X-Real-IP")}`
+  );
+  next();
+});
+
 // ---------------- Health Check ----------------
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    ip: req.ip,
+    headers: {
+      "x-forwarded-for": req.get("X-Forwarded-For"),
+      "x-real-ip": req.get("X-Real-IP"),
+    },
   });
 });
 
-// ---------------- API Routes ----------------
-// Use more lenient rate limiting for auth routes in production
-if (isProduction) {
-  app.use("/api/v1/users", UserRouter);
-  app.use("/api/v1/expenses", protect, ExpenseRouter);
-} else {
-  app.use("/api/v1/users", authLimiter, UserRouter);
-  app.use("/api/v1/expenses", protect, expenseLimiter, ExpenseRouter);
-}
+// ---------------- API Routes (NO RATE LIMITING) ----------------
+app.use("/api/v1/users", UserRouter);
+app.use("/api/v1/expenses", protect, ExpenseRouter);
 
 // ---------------- Serve React Frontend ----------------
 const __filename = fileURLToPath(import.meta.url);
@@ -136,11 +141,8 @@ connectDB()
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(
-        `Rate Limiting: ${
-          isProduction ? "Production (Lenient)" : "Development (Strict)"
-        }`
-      );
+      console.log(`Rate Limiting: DISABLED`);
+      console.log(`Trust Proxy: Enabled`);
       console.log(
         `CORS: ${
           process.env.NODE_ENV === "production"

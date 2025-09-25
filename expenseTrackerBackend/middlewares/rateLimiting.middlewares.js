@@ -1,5 +1,11 @@
 import rateLimit from "express-rate-limit";
 
+// Only enable rate limiting if environment variable is set
+const ENABLE_RATE_LIMITING = process.env.ENABLE_RATE_LIMITING === "true";
+
+// Create a no-op middleware for when rate limiting is disabled
+const noOpMiddleware = (req, res, next) => next();
+
 //Key generator: preference order -> user ID > session ID > IP
 const keyGenerator = (req, res) => {
   if (req.user?.id) return `user-${req.user.id}`;
@@ -7,57 +13,56 @@ const keyGenerator = (req, res) => {
   return `ip-${req.ip}`;
 };
 
-// General API rate limit - Much more lenient
-export const generalLimiter = rateLimit({
+// Very lenient general rate limit
+const actualGeneralLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === "development" ? 10000 : 1000, // Increased from 500 to 1000
+  max: 5000, // Very high limit
   keyGenerator,
   message: {
-    message: "Too many requests from this IP, please try again later.",
+    message: "Too many requests, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip successful requests
   skipSuccessfulRequests: true,
-  // Skip failed requests under 400
-  skip: (req, res) => res.statusCode < 400,
 });
 
-// More lenient auth rate limit
-export const authLimiter = rateLimit({
+// Very lenient auth rate limit
+const actualAuthLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === "development" ? 100 : 50, // Increased from 20 to 50
+  max: 100,
   keyGenerator,
   message: {
     message: "Too many authentication attempts, please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Only count failed attempts
   skip: (req, res) => res.statusCode < 400,
 });
 
-// More lenient expense operations rate limit
-export const expenseLimiter = rateLimit({
+// Very lenient expense rate limit
+const actualExpenseLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: process.env.NODE_ENV === "development" ? 1000 : 100, // Increased from 30 to 100
+  max: 200,
   keyGenerator,
   message: {
     message: "Too many expense operations, please slow down.",
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip successful requests
   skipSuccessfulRequests: true,
 });
 
-// Alternative: Create a production-specific limiter that's very lenient
-export const productionLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 2000, // Very high limit for production
-  message: {
-    message: "Rate limit exceeded, please try again later.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Export either the actual limiters or no-op middleware
+export const generalLimiter = ENABLE_RATE_LIMITING
+  ? actualGeneralLimiter
+  : noOpMiddleware;
+export const authLimiter = ENABLE_RATE_LIMITING
+  ? actualAuthLimiter
+  : noOpMiddleware;
+export const expenseLimiter = ENABLE_RATE_LIMITING
+  ? actualExpenseLimiter
+  : noOpMiddleware;
+
+console.log(
+  `Rate limiting is ${ENABLE_RATE_LIMITING ? "ENABLED" : "DISABLED"}`
+);

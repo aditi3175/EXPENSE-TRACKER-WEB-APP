@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import session from "express-session";
 import connectDB from "./DB/db.js";
 // TEMPORARILY COMMENTED OUT RATE LIMITING
 // import {
@@ -48,19 +47,19 @@ app.use(
   })
 );
 
-app.use(
-  session({
-    secret: process.env.JWT_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-    },
-  })
-);
+// app.use(
+//   session({
+//     secret: process.env.JWT_SECRET,
+//     resave: false,
+//     saveUninitialized: true,
+//     cookie: {
+//       secure: process.env.NODE_ENV === "production",
+//     },
+//   })
+// );
 
 // RATE LIMITING COMPLETELY DISABLED FOR NOW
-console.log("⚠️  Rate limiting is DISABLED for debugging");
+console.log("Rate limiting is DISABLED for debugging");
 
 const corsOptions = {
   origin:

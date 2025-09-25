@@ -8,6 +8,7 @@ import {
   generalLimiter,
   authLimiter,
   expenseLimiter,
+  productionLimiter,
 } from "./middlewares/rateLimiting.middlewares.js";
 import {
   notFound,
@@ -16,13 +17,16 @@ import {
 import UserRouter from "./routers/user.routers.js";
 import ExpenseRouter from "./routers/expenses.routers.js";
 import { fileURLToPath } from "url";
-import { dirname, join} from "path";
+import { dirname, join } from "path";
 import protect from "./middlewares/auth.middlewares.js";
 
 dotenv.config();
 
 // ---------------- Create Express App ----------------
 const app = express();
+
+// ---------------- Trust Proxy (Important for Render) ----------------
+app.set("trust proxy", 1);
 
 // ---------------- Security & Middleware ----------------
 app.use(
@@ -49,12 +53,18 @@ app.use(
     resave: false,
     saveUninitialized: true,
     cookie: {
-      secure: process.env.NODE_ENV === "production"
+      secure: process.env.NODE_ENV === "production",
     },
   })
 );
 
-app.use(generalLimiter);
+// Use more lenient rate limiting based on environment
+const isProduction = process.env.NODE_ENV === "production";
+if (isProduction) {
+  app.use(productionLimiter); // Use very lenient limiter in production
+} else {
+  app.use(generalLimiter);
+}
 
 const corsOptions = {
   origin:
@@ -71,14 +81,16 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Debug middleware
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.originalUrl}`);
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log(`Body:`, req.body);
-  }
-  next();
-});
+// Debug middleware - only in development
+if (!isProduction) {
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.originalUrl}`);
+    if (req.body && Object.keys(req.body).length > 0) {
+      console.log(`Body:`, req.body);
+    }
+    next();
+  });
+}
 
 // ---------------- Health Check ----------------
 app.get("/health", (req, res) => {
@@ -90,8 +102,14 @@ app.get("/health", (req, res) => {
 });
 
 // ---------------- API Routes ----------------
-app.use("/api/v1/users", authLimiter, UserRouter);
-app.use("/api/v1/expenses", protect, expenseLimiter, ExpenseRouter );
+// Use more lenient rate limiting for auth routes in production
+if (isProduction) {
+  app.use("/api/v1/users", UserRouter);
+  app.use("/api/v1/expenses", protect, ExpenseRouter);
+} else {
+  app.use("/api/v1/users", authLimiter, UserRouter);
+  app.use("/api/v1/expenses", protect, expenseLimiter, ExpenseRouter);
+}
 
 // ---------------- Serve React Frontend ----------------
 const __filename = fileURLToPath(import.meta.url);
@@ -118,6 +136,11 @@ connectDB()
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(
+        `Rate Limiting: ${
+          isProduction ? "Production (Lenient)" : "Development (Strict)"
+        }`
+      );
       console.log(
         `CORS: ${
           process.env.NODE_ENV === "production"

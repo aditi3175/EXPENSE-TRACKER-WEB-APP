@@ -33,8 +33,8 @@ const SignUp = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      alert('Password must be at least 6 characters long');
+    if (formData.password.length < 8) {
+      alert("Password must be 8+ chars with uppercase, lowercase, and number");
       return;
     }
 

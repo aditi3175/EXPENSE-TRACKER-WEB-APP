@@ -35,7 +35,7 @@ app.use(
         imgSrc: ["'self'", "data:", "https:"],
         connectSrc: [
           "'self'",
-          "https://expense-tracker-web-app-nott.onrender.com",
+          "https://expense-tracker-web-app-1.onrender.com",
         ],
       },
     },
@@ -48,7 +48,7 @@ const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
       ? process.env.CORS_ORIGIN ||
-        "https://expense-tracker-web-app-nott.onrender.com"
+        "https://expense-tracker-web-app-1.onrender.com"
       : true,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

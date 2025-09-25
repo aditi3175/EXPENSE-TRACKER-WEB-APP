@@ -1,9 +1,17 @@
 import rateLimit from "express-rate-limit";
 
+//Key generator: prefrence order -> user ID > session ID > IP
+const keyGenerator = (req, res) => {
+  if (req.user?.id) return `user-${req.user.id}`;
+  if (req.sessionID) return `session-${req.sessionID}`;
+  return req.ip;
+};
+
 // General API rate limit
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5000000000000000, // limit each IP to requests per windowMs
+  max: process.env.NODE_ENV === "development" ? 10000 : 500,
+  keyGenerator,
   message: {
     message: "Too many requests from this IP, please try again later.",
   },
@@ -14,7 +22,8 @@ export const generalLimiter = rateLimit({
 // Strict rate limit for auth endpoints
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5000, // limit each IP to 50 requests per windowMs for login/register
+  max: process.env.NODE_ENV === "development" ? 100 : 20,
+  keyGenerator,
   message: {
     message: "Too many authentication attempts, please try again later.",
   },
@@ -25,7 +34,7 @@ export const authLimiter = rateLimit({
 // Expense operations rate limit
 export const expenseLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 30, // limit each IP to 30 expense operations per minute
+  max: process.env.NODE_ENV === "development" ? 1000 : 30,
   message: {
     message: "Too many expense operations, please slow down.",
   },

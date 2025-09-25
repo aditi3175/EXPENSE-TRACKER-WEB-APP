@@ -6,6 +6,7 @@ import connectDB from "./DB/db.js";
 import {
   generalLimiter,
   authLimiter,
+  expenseLimiter,
 } from "./middlewares/rateLimiting.middlewares.js";
 import {
   notFound,
@@ -15,6 +16,7 @@ import UserRouter from "./routers/user.routers.js";
 import ExpenseRouter from "./routers/expenses.routers.js";
 import { fileURLToPath } from "url";
 import { dirname, join} from "path";
+import protect from "./middlewares/auth.middlewares.js";
 
 dotenv.config();
 
@@ -77,7 +79,7 @@ app.get("/health", (req, res) => {
 
 // ---------------- API Routes ----------------
 app.use("/api/v1/users", authLimiter, UserRouter);
-app.use("/api/v1/expenses", ExpenseRouter);
+app.use("/api/v1/expenses", protect, expenseLimiter, ExpenseRouter );
 
 // ---------------- Serve React Frontend ----------------
 const __filename = fileURLToPath(import.meta.url);
